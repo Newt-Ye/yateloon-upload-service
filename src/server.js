@@ -5,9 +5,12 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 import cors from 'cors'
+import dotenv from 'dotenv';
+
+dotenv.config(); 
 
 const app = express();
-const PORT = process.env.PORT || 3010;
+const PORT = process.env.PORT || 3000;
 const UPLOAD_ROOT = path.resolve('./uploads');
 
 // 基本設定：允許所有來源
