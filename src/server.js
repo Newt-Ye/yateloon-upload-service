@@ -6,15 +6,19 @@ import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 import cors from 'cors'
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 
 dotenv.config(); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const UPLOAD_ROOT = path.resolve('./uploads');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // 基本設定：允許所有來源
 app.use(cors());
+app.use(express.json());
 
 // 確保目錄存在
 function ensureDir(dirPath) {
@@ -98,6 +102,7 @@ app.post('/delete', (req, res) => {
   }
 
   const baseDir = path.join(__dirname, '../uploads', folder);
+
 
   const deleted = [];
   const errors = [];
