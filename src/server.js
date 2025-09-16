@@ -97,7 +97,7 @@ app.post('/upload/multi', upload.array('files', 10), (req, res) => {
 app.post('/delete', (req, res) => {
   const { folder, filenames } = req.body;
 
-  if (!folder || !Array.isArray(filenames)) {
+  if (!folder || !Array.isArray(filenames) || filenames.length === 0) {
     return res.status(400).json({ error: 'Missing folder or filenames[]' });
   }
 
@@ -120,6 +120,53 @@ app.post('/delete', (req, res) => {
   });
 
   return res.json({ deleted, errors });
+});
+
+app.post('/copy/multi', (req, res) => {
+  const { folder, copyFiles } = req.body;
+
+  if (!folder || !Array.isArray(copyFiles) || copyFiles.length === 0) {
+    return res.status(400).json({ error: 'Missing folder or copyFiles[]' });
+  }
+
+  const uploadsDir = path.join(__dirname, '../uploads', folder);
+  const copied = [];
+  const errors = [];
+
+  copyFiles.forEach((file) => {
+    
+    const sourcePath = path.join(uploadsDir, file.filename);
+
+    if (!fs.existsSync(sourcePath)) {
+      errors.push({ filename: file.filename, error: 'Source file not found' });
+      return;
+    }
+
+    const ext = path.extname(file.filename).replace('.', '') || 'bin';
+    const newFilename = `${uuidv4()}.${ext}`;
+    const relPath = path.posix.join(folder, newFilename);
+    const targetPath = path.join(uploadsDir, newFilename);
+
+    try {
+      fs.copyFileSync(sourcePath, targetPath);
+
+      const stats = fs.statSync(targetPath);
+      const mimeType = mime.lookup(targetPath) || 'application/octet-stream';
+
+      copied.push({
+        originalName: file.originalName,
+        mime: mimeType,
+        size: stats.size,
+        key: relPath,
+        url: `/uploads/${relPath}`,
+      });
+    } catch (err) {
+      console.error(`Failed to copy ${file.filename}: ${err.message}`);
+      errors.push({ filename: file.filename, error: err.message });
+    }
+  });
+
+  return res.json({ copied, errors });
 });
 
 // 靜態檔案存取
